@@ -101,34 +101,7 @@ func main() {
 	// Проверка СЛАУ на совместность.
 	for i := 0; i < N; i++ {
 
-		isEmptyRow := true
-		for j := 0; j < N; j++ {
-
-			if matrix[i][j] != 0 {
-				isEmptyRow = false
-				break
-			}
-		}
-
-		if isEmptyRow {
-
-			fmt.Printf("No solution\n")
-			return
-		}
-	}
-
-	for j := 0; j < N; j++ {
-
-		isEmptyColumn := true
-		for i := 0; i < N; i++ {
-
-			if matrix[i][j] != 0 {
-				isEmptyColumn = false
-				break
-			}
-		}
-
-		if isEmptyColumn {
+		if matrix[i][i] == 0 {
 
 			fmt.Printf("No solution\n")
 			return
