@@ -11,9 +11,9 @@ var (
 func printMatrix() {
 
 	fmt.Printf("\n")
-	for i := 0; i < N; i++ {
+	for i := range matrix {
 
-		for j := 0; j < N + 1; j++ {
+		for j := range matrix[0] {
 
 			if j == N {
 				fmt.Printf("%d\n", matrix[i][j])
@@ -48,47 +48,41 @@ func lcm(a, b int) int {
 	return abs(a * b / gcd(a, b))
 }
 
-// Преобразование столба матрицы к столбу диагональной матрицы
+// Преобразование столбца матрицы к столбцу диагональной матрицы
 func diagonalizeColumn(I, J int) {
 
 	pivotElem := matrix[I][J]
-	for i := 0; i < N; i++ {
+	for i := range matrix {
 
 		headElem := matrix[i][J]
 		if headElem != 0 && i != I {
 
 			lcm := lcm(headElem, pivotElem)
-			//printMatrix()
-			//fmt.Printf("lcm: %d\n", lcm)
-
-			for j := 0; j < N + 1; j++ {
+			for j := range matrix[0] {
 
 				matrix[i][j] *= lcm / headElem
 				matrix[i][j] -= lcm / pivotElem * matrix[I][j]
 			}
 		}
 	}
-
 	matrix[I], matrix[J] = matrix[J], matrix[I]
 }
 
 func main() {
 
 	fmt.Scanf("%d", &N)
-
 	matrix = make([][]int, N)
-	for i := 0; i < N; i++ {
+	for i := range matrix {
 
 		matrix[i] = make([]int, N + 1)
-		for j := 0; j < N + 1; j++ {
+		for j := range matrix[i] {
 
 			fmt.Scanf("%d", &matrix[i][j])
 		}
 	}
 
 	// Приведение матрицы СЛАУ к диагональному виду.
-	for j := 0; j < N; j++ {
-
+	for j := range matrix {
 		for i := j; i < N; i++ {
 
 			if matrix[i][j] != 0 {
@@ -99,22 +93,20 @@ func main() {
 	}	
 
 	// Проверка СЛАУ на совместность.
-	for i := 0; i < N; i++ {
+	for i := range matrix {
 
 		if matrix[i][i] == 0 {
-
 			fmt.Printf("No solution\n")
 			return
 		}
 	}
 
 	// Упрощение итоговой СЛАУ и печать решений.
-	for i := 0; i < N; i++ {
+	for i := range matrix {
 
 		gcd := gcd(matrix[i][i], matrix[i][N])
 		matrix[i][i] /= gcd
 		matrix[i][N] /= gcd
-
 		fmt.Printf("%d/%d\n", matrix[i][N], matrix[i][i])
 	}
 }

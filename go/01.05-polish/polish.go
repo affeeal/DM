@@ -6,7 +6,7 @@ func decodePolish(expr string) int {
 
 	var (
 		pos, len int = 0, len(expr)
-		oStack []int = make([]int, 256)
+		oStack []byte = make([]byte, 256)
 		nStack []int = make([]int, 256)
 		oCount, nCount int = 0, 0
 	)
@@ -18,27 +18,19 @@ func decodePolish(expr string) int {
 
 			nStack[nCount] = int(sym) - int('0')
 			nCount++
-		} else if sym == '*' {
+		} else if sym == '*' || sym == '+' || sym == '-' {
 
-			oStack[oCount] = int('*')
-			oCount++
-		} else if sym == '+' {
-
-			oStack[oCount] = int('+')
-			oCount++
-		} else if sym == '-' {
-
-			oStack[oCount] = int('-')
+			oStack[oCount] = sym
 			oCount++
 		} else if sym == ')' {
 
-			if oStack[oCount - 1] == int('*') {
+			if oStack[oCount - 1] == '*' {
 
 				nStack[nCount - 2] *= nStack[nCount - 1]
-			} else if oStack[oCount - 1] == int('+') {
+			} else if oStack[oCount - 1] == '+' {
 
 				nStack[nCount - 2] += nStack[nCount - 1]
-			} else if oStack[oCount - 1] == int('-') {
+			} else if oStack[oCount - 1] == '-' {
 
 				nStack[nCount - 2] -= nStack[nCount - 1]
 			}
