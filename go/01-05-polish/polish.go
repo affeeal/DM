@@ -6,8 +6,8 @@ func decodePolish(expr string) int {
 
 	var (
 		pos, len int = 0, len(expr)
-		oStack []byte = make([]byte, 256)
-		nStack []int = make([]int, 256)
+		oStack []byte = make([]byte, 128)
+		nStack []int = make([]int, 128)
 		oCount, nCount int = 0, 0
 	)
 
