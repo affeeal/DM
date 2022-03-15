@@ -5,6 +5,7 @@ import "math/rand"
 var m int = 8
 
 type SkipList struct {
+
 	s string
 	x int
 	next []*SkipList
@@ -12,8 +13,7 @@ type SkipList struct {
 
 func InitSkipList() *SkipList {
 
-	var l SkipList
-	l.next = make([]*SkipList, m)
+	l := SkipList { "", 0, make([]*SkipList, m) }
 	for i := 0; i < m; i++ {
 
 		l.next[i] = nil
@@ -28,11 +28,8 @@ func Succ(e *SkipList) *SkipList {
 
 func Skip(p []*SkipList, l *SkipList, s string) {
 
-	var (
-		e *SkipList = l
-		i int = m - 1
-	)
-
+	e := l
+	i := m - 1
 	for i >= 0 {
 
 		for e.next[i] != nil && compareStrings(e.next[i].s, s) < 0 {
@@ -46,13 +43,9 @@ func Skip(p []*SkipList, l *SkipList, s string) {
 
 func (l *SkipList) Lookup(s string) (x int, exists bool) {
 
-	var (
-		p []*SkipList = make([]*SkipList, m)
-		e *SkipList
-	)
-
+	p := make([]*SkipList, m)
 	Skip(p, l, s)
-	e = Succ(p[0])
+	e := Succ(p[0])
 	if e == nil || e.s != s {
 
 		return 0, false

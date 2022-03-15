@@ -47,10 +47,8 @@ func lex(sentence string, array AssocArray) []int {
 
 	addToAssocArray := func() {
 
-		s := string(sentence[begin:end])
-		//fmt.Printf("s: %s\n", s)
+		var s string = string(sentence[begin:end])
 		value, exists := array.Lookup(s)
-		//fmt.Printf("%s, %x\n", exists, value)
 		if exists {
 
 			result = append(result, value)
@@ -64,7 +62,6 @@ func lex(sentence string, array AssocArray) []int {
 
 	for pos, sym := range sentence {
 
-		//fmt.Printf("sym: %c, pos: %d\n", sym, pos)
 		if sym != ' ' && inWord == false {
 
 			inWord = true
@@ -86,15 +83,17 @@ func lex(sentence string, array AssocArray) []int {
 
 func main() {
 
-	var sentence string = " alpha x1 beta alpha x1 y "
+	var (
+		sentence string = "alpha x1 beta alpha x1 y "
 
-	var t *AVLTreeNode = InitAVLTree()
-	var arrayAVLTree AssocArray = t
-	var resultAVLTree []int = lex(sentence, arrayAVLTree)
-	fmt.Printf("%d\n", resultAVLTree)
+		t *AVLTreeNode = InitAVLTree()
+		arrayAVLTree AssocArray = t
+		resultAVLTree []int = lex(sentence, arrayAVLTree)
 
-	var l *SkipList = InitSkipList()
-	var arraySL AssocArray = l
-	resultSL := lex(sentence, arraySL)
-	fmt.Printf("%d\n", resultSL)
+		l *SkipList = InitSkipList()
+		arraySL AssocArray = l
+		resultSL = lex(sentence, arraySL)
+	)
+
+	fmt.Printf("SkipList: %d, AVLTree: %d.\n", resultSL, resultAVLTree)
 }

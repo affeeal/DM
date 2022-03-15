@@ -1,34 +1,27 @@
 package main
 
-//import "fmt"
-
-var relevantTree *AVLTreeNode = nil
+var root *AVLTreeNode = nil
 
 type AVLTreeNode struct {
 
-	key string
-	value, balance int
+	s string
+	x, balance int
 	left, right *AVLTreeNode
 	parent *AVLTreeNode
 }
 
-func InitAVLTreeNode(s string, x int) AVLTreeNode {
-
-	return AVLTreeNode { s, x, 0, nil, nil, nil}
-}
-
 func InitAVLTree() *AVLTreeNode {
 
-	var tree AVLTreeNode = InitAVLTreeNode("", 0)
-	relevantTree = &tree
+	tree := AVLTreeNode { "", 0, 0, nil, nil, nil}
+	root = &tree
 	return &tree
 }
 
-func ReplaceNode(tree, x, y *AVLTreeNode) {
+func ReplaceNode(x, y *AVLTreeNode) {
 
-	if x == tree {
+	if x == root {
 
-		relevantTree = y
+		root = y
 		if y != nil {
 
 			y.parent = nil
@@ -50,11 +43,10 @@ func ReplaceNode(tree, x, y *AVLTreeNode) {
 	}
 }
 
-func RotateLeft(tree, x *AVLTreeNode) {
+func RotateLeft(x *AVLTreeNode) {
 
 	y := x.right
-	ReplaceNode(tree, x, y)
-	tree = relevantTree
+	ReplaceNode(x, y)
 	b := y.left
 	if b != nil {
 
@@ -63,7 +55,6 @@ func RotateLeft(tree, x *AVLTreeNode) {
 	x.right = b
 	x.parent = y
 	y.left = x
-
 	x.balance--
 	if y.balance > 0 {
 
@@ -76,11 +67,10 @@ func RotateLeft(tree, x *AVLTreeNode) {
 	}
 }
 
-func RotateRight(tree, x *AVLTreeNode) {
+func RotateRight(x *AVLTreeNode) {
 
 	y := x.left
-	ReplaceNode(tree, x, y)
-	tree = relevantTree
+	ReplaceNode(x, y)
 	b := y.right
 	if b != nil {
 
@@ -89,7 +79,6 @@ func RotateRight(tree, x *AVLTreeNode) {
 	x.left = b
 	x.parent = y
 	y.right = x
-
 	x.balance++
 	if y.balance < 0 {
 
@@ -104,10 +93,10 @@ func RotateRight(tree, x *AVLTreeNode) {
 
 func (tree *AVLTreeNode) Lookup(s string) (x int, exists bool) {
 
-	var n *AVLTreeNode = relevantTree
-	for n != nil && n.key != s {
+	n := root
+	for n != nil && n.s != s {
 
-		if compareStrings(s, n.key) < 0 {
+		if compareStrings(s, n.s) < 0 {
 
 			n = n.left
 		} else {
@@ -115,31 +104,30 @@ func (tree *AVLTreeNode) Lookup(s string) (x int, exists bool) {
 			n = n.right
 		}
 	}
-
 	if n == nil {
 
 		return 0, false
 	}
-	return n.value, true
+	return n.x, true
 }
 
 func (tree *AVLTreeNode) Assign(s string, x int) {
 
-	var a AVLTreeNode = InitAVLTreeNode(s, x)
-	if relevantTree.key == "" {
+	n := AVLTreeNode { s, x, 0, nil, nil, nil}
+	if root.s == "" {
 
-		relevantTree = &a
+		root = &n
 	} else {
 
-		var p *AVLTreeNode = relevantTree
+		p := root
 		for {
 
-			if compareStrings(s, p.key) < 0 {
+			if compareStrings(s, p.s) < 0 {
 
 				if p.left == nil {
 
-					p.left = &a
-					a.parent = p
+					p.left = &n
+					n.parent = p
 					break
 				}
 				p = p.left
@@ -147,24 +135,23 @@ func (tree *AVLTreeNode) Assign(s string, x int) {
 
 				if p.right == nil {
 
-					p.right = &a
-					a.parent = p
+					p.right = &n
+					n.parent = p
 					break
 				}
 				p = p.right
 			}
 		}
 	}
-
-	var pa *AVLTreeNode = &a
+	pn := &n
 	for {
 
-		var p *AVLTreeNode = pa.parent
+		p := pn.parent
 		if p == nil {
 
 			break
 		}
-		if pa == p.left {
+		if pn == p.left {
 
 			p.balance--
 			if p.balance == 0 {
@@ -173,11 +160,11 @@ func (tree *AVLTreeNode) Assign(s string, x int) {
 			}
 			if p.balance == -2 {
 
-				if pa.balance == 1 {
+				if pn.balance == 1 {
 
-					RotateLeft(relevantTree, pa)
+					RotateLeft(pn)
 				}
-				RotateRight(relevantTree, p)
+				RotateRight(p)
 				break
 			}
 		} else {
@@ -189,14 +176,14 @@ func (tree *AVLTreeNode) Assign(s string, x int) {
 			}
 			if p.balance == 2 {
 
-				if pa.balance == -1 {
+				if pn.balance == -1 {
 
-					RotateRight(relevantTree, pa)
+					RotateRight(pn)
 				}
-				RotateLeft(relevantTree, p)
+				RotateLeft(p)
 				break
 			}			
 		}
-		pa = p
+		pn = p
 	}
 }
