@@ -2,6 +2,8 @@ package main
 
 //import "fmt"
 
+var relevantTree *AVLTreeNode = nil
+
 type AVLTreeNode struct {
 
 	key string
@@ -18,6 +20,7 @@ func InitAVLTreeNode(s string, x int) AVLTreeNode {
 func InitAVLTree() *AVLTreeNode {
 
 	var tree AVLTreeNode = InitAVLTreeNode("", 0)
+	relevantTree = &tree
 	return &tree
 }
 
@@ -25,7 +28,7 @@ func ReplaceNode(tree, x, y *AVLTreeNode) {
 
 	if x == tree {
 
-		*tree = *y
+		relevantTree = y
 		if y != nil {
 
 			y.parent = nil
@@ -35,14 +38,14 @@ func ReplaceNode(tree, x, y *AVLTreeNode) {
 		p := x.parent
 		if y != nil {
 
-			*(y.parent) = *p
+			y.parent = p
 		}
 		if p.left == x {
 
-			*(p.left) = *(y)
+			p.left = y
 		} else {
 
-			*(p.right) = *(y)
+			p.right = y
 		}
 	}
 }
@@ -51,6 +54,7 @@ func RotateLeft(tree, x *AVLTreeNode) {
 
 	y := x.right
 	ReplaceNode(tree, x, y)
+	tree = relevantTree
 	b := y.left
 	if b != nil {
 
@@ -76,6 +80,7 @@ func RotateRight(tree, x *AVLTreeNode) {
 
 	y := x.left
 	ReplaceNode(tree, x, y)
+	tree = relevantTree
 	b := y.right
 	if b != nil {
 
@@ -99,99 +104,99 @@ func RotateRight(tree, x *AVLTreeNode) {
 
 func (tree *AVLTreeNode) Lookup(s string) (x int, exists bool) {
 
-	var node *AVLTreeNode = tree
-	for node != nil && node.key != s {
+	var n *AVLTreeNode = relevantTree
+	for n != nil && n.key != s {
 
-		if compareStrings(s, node.key) < 0 {
+		if compareStrings(s, n.key) < 0 {
 
-			node = node.left
+			n = n.left
 		} else {
 
-			node = node.right
+			n = n.right
 		}
 	}
 
-	if node == nil {
+	if n == nil {
 
 		return 0, false
 	}
-	return node.value, true
+	return n.value, true
 }
 
 func (tree *AVLTreeNode) Assign(s string, x int) {
 
-	var newNode AVLTreeNode = InitAVLTreeNode(s, x)
-	if tree.key == "" {
+	var a AVLTreeNode = InitAVLTreeNode(s, x)
+	if relevantTree.key == "" {
 
-		*tree = newNode
+		relevantTree = &a
 	} else {
 
-		var node *AVLTreeNode = tree
+		var p *AVLTreeNode = relevantTree
 		for {
 
-			if compareStrings(s, node.key) < 0 {
+			if compareStrings(s, p.key) < 0 {
 
-				if node.left == nil {
+				if p.left == nil {
 
-					node.left = &newNode
-					newNode.parent = node
+					p.left = &a
+					a.parent = p
 					break
 				}
-				node = node.left
+				p = p.left
 			} else {
 
-				if node.right == nil {
+				if p.right == nil {
 
-					node.right = &newNode
-					newNode.parent = node
+					p.right = &a
+					a.parent = p
 					break
 				}
-				node = node.right
+				p = p.right
 			}
 		}
 	}
 
-	var a *AVLTreeNode = &newNode
+	var pa *AVLTreeNode = &a
 	for {
 
-		var node *AVLTreeNode = a.parent
-		if node == nil {
+		var p *AVLTreeNode = pa.parent
+		if p == nil {
 
 			break
 		}
-		if a == node.left {
+		if pa == p.left {
 
-			node.balance--
-			if node.balance == 0 {
+			p.balance--
+			if p.balance == 0 {
 
 				break
 			}
-			if node.balance == -2 {
+			if p.balance == -2 {
 
-				if a.balance == 1 {
+				if pa.balance == 1 {
 
-					RotateLeft(tree, a)
+					RotateLeft(relevantTree, pa)
 				}
-				RotateRight(tree, node)
+				RotateRight(relevantTree, p)
 				break
 			}
 		} else {
 
-			node.balance++
-			if node.balance == 0 {
+			p.balance++
+			if p.balance == 0 {
 
 				break
 			}
-			if node.balance == 2 {
+			if p.balance == 2 {
 
-				if a.balance == -1 {
+				if pa.balance == -1 {
 
-					RotateRight(tree, a)
+					RotateRight(relevantTree, pa)
 				}
-				RotateLeft(tree, node)
+				RotateLeft(relevantTree, p)
 				break
 			}			
 		}
-		a = node
+		pa = p
 	}
 }

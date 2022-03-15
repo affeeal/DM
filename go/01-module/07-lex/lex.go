@@ -48,9 +48,9 @@ func lex(sentence string, array AssocArray) []int {
 	addToAssocArray := func() {
 
 		s := string(sentence[begin:end])
-		fmt.Printf("s: %s\n", s)
+		//fmt.Printf("s: %s\n", s)
 		value, exists := array.Lookup(s)
-		fmt.Printf("%s, %x\n", exists, value)
+		//fmt.Printf("%s, %x\n", exists, value)
 		if exists {
 
 			result = append(result, value)
@@ -86,16 +86,15 @@ func lex(sentence string, array AssocArray) []int {
 
 func main() {
 
-	//var sentence string = "alpha x1 beta alpha x1 y"
-	var sentence string = "a b c b a"
+	var sentence string = " alpha x1 beta alpha x1 y "
 
-	var tree *AVLTreeNode = InitAVLTree()
-	var arrayAVLTree AssocArray = tree
+	var t *AVLTreeNode = InitAVLTree()
+	var arrayAVLTree AssocArray = t
 	var resultAVLTree []int = lex(sentence, arrayAVLTree)
 	fmt.Printf("%d\n", resultAVLTree)
 
-	/*l *SkipList = InitSkipList()
-	arraySL AssocArray = l
+	var l *SkipList = InitSkipList()
+	var arraySL AssocArray = l
 	resultSL := lex(sentence, arraySL)
-	fmt.Printf("%d\n", resultSL)*/
+	fmt.Printf("%d\n", resultSL)
 }
