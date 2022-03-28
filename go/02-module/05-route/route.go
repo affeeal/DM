@@ -2,11 +2,6 @@ package main
 
 import "fmt"
 
-/*
- Доработать: подкорректировать приоритет выбора нового ребра:
- если возможно пройти по петле, то в первую очередь нужно сделать именно это.
-*/
-
 type Vertex struct {
 
 	x int
@@ -20,6 +15,14 @@ type List struct {
 	next *List
 }
 
+func InitVertex(x int) *Vertex {
+
+	v := new(Vertex)
+	v.x = x
+	v.l = InitList()
+	return v
+}
+
 func InitList() *List {
 
 	l := new(List)
@@ -27,14 +30,6 @@ func InitList() *List {
 	l.a = 0
 	l.next = nil
 	return l
-}
-
-func InitVertex(x int) *Vertex {
-
-	v := new(Vertex)
-	v.x = x
-	v.l = InitList()
-	return v
 }
 
 func InitRoute(V int, vs []*Vertex) *List {
@@ -45,16 +40,16 @@ func InitRoute(V int, vs []*Vertex) *List {
 	return r
 }
 
-func AddEdge(u, v, N int, a byte, vs []*Vertex) {
+func AddEdgeToList(u, v *Vertex, a byte, N int) {
 
-	l := vs[u].l
+	l := u.l
 	for l.next != nil {
 
-		if l.next.v.x > v {
+		if l.next.v.x > v.x {
 
 			t := l.next
 			l.next = InitList()
-			l.next.v = vs[v]
+			l.next.v = v
 			l.next.a = a
 			l.next.next = t
 			return
@@ -63,22 +58,20 @@ func AddEdge(u, v, N int, a byte, vs []*Vertex) {
 	}
 
 	l.next = InitList()
-	l.next.v = vs[v]
+	l.next.v = v
 	l.next.a = a
 }
 
-func PrintGraph(N int, vs []*Vertex) {
+func AddEdgeToRoute(u *Vertex, a byte, r *List) {
 
-	for i := 0; i < N; i++ {
+	l := r.next
+	for l.next != nil {
 
-		v := vs[i]
-		fmt.Printf("%d => ", v.x)
-		for l := v.l.next; l != nil; l = l.next {
-
-			fmt.Printf("%d, %c; ", l.v.x, l.a)
-		}
-		fmt.Println()
+		l = l.next
 	}
+	l.a = a
+	l.next = InitList()
+	l.next.v = u
 }
 
 func isEdgeInRoute(u, v *Vertex, a byte, r *List) bool {
@@ -98,19 +91,7 @@ func isEdgeInRoute(u, v *Vertex, a byte, r *List) bool {
 	return false
 }
 
-func AddEdgeToRoute(u *Vertex, a byte, r *List) {
-
-	l := r.next
-	for l.next != nil {
-
-		l = l.next
-	}
-	l.a = a
-	l.next = InitList()
-	l.next.v = u
-}
-
-func StepBackInRoute(r *List) {
+func ReturnToPrevVertex(r *List) {
 
 	l := r.next
 	prevl := l
@@ -127,39 +108,33 @@ func StepBackInRoute(r *List) {
 func BuildRoute(u *Vertex, N int, r *List) {
 
 	hasFreeEdge := false
-	l := u.l.next
-	for l != nil {
 
-		if !isEdgeInRoute(u, l.v, l.a, r) {
+	for l := u.l.next; l != nil; l = l.next {
+
+		if l.v == u && !isEdgeInRoute(u, l.v, l.a, r) {
+
+			AddEdgeToRoute(l.v, l.a, r)
+		} else if l.v.x > u.x {
+
+			break
+		}
+	}
+	
+	for l := u.l.next; l != nil; l = l.next {
+
+		if l.v != u && !isEdgeInRoute(u, l.v, l.a, r) {
 
 			hasFreeEdge = true
-			//fmt.Printf("GO FROM %d to %d by %c\n", u.x, l.v.x, l.a)
-			//fmt.Printf("IS EDGE IN ROOT: %d\n", isEdgeInRoute(u, l.v, l.a, r))
-			//PrintRoute(r)
 			AddEdgeToRoute(l.v, l.a, r)
 			BuildRoute(l.v, N, r)
 		}
-		l = l.next
+		
 	}
 
 	if !hasFreeEdge {
 
-		//fmt.Printf("STUCK IN %d\n", u.x)
-		StepBackInRoute(r)
+		ReturnToPrevVertex(r)
 	}
-}
-
-func PrintRoute(r *List) {
-
-	l := r.next
-	for l.next.next != nil {
-
-		fmt.Printf("%c ", l.a)
-		l = l.next
-	}
-	//fmt.Printf("not ok")
-	fmt.Printf("%c\n", l.a)
-
 }
 
 func CorrectRoute(r *List) {
@@ -172,6 +147,32 @@ func CorrectRoute(r *List) {
 	l.v = nil
 	l.a = 0
 	l.next = nil
+}
+
+func PrintRoute(r *List) {
+
+	l := r.next
+	for l.next.next != nil {
+
+		fmt.Printf("%c ", l.a)
+		l = l.next
+	}
+	fmt.Printf("%c\n", l.a)
+
+}
+
+func PrintGraph(N int, vs []*Vertex) {
+
+	for i := 0; i < N; i++ {
+
+		v := vs[i]
+		fmt.Printf("%d => ", v.x)
+		for l := v.l.next; l != nil; l = l.next {
+
+			fmt.Printf("%d, %c; ", l.v.x, l.a)
+		}
+		fmt.Println()
+	}
 }
 
 func main() {
@@ -192,15 +193,14 @@ func main() {
 	for i := 0; i < M; i++ {
 
 		fmt.Scanf("%d %d %c\n", &u, &v, &a)
-		AddEdge(u, v, N, a, vs)
+		AddEdgeToList(vs[u], vs[v], a, N)
 		if u != v {
 
-			AddEdge(v, u, N, a, vs)
+			AddEdgeToList(vs[v], vs[u], a, N)
 		}
 	}
 
 	r := InitRoute(V, vs)
-	//PrintGraph(N, vs)
 	BuildRoute(vs[V], N, r)
 	CorrectRoute(r)
 	PrintRoute(r)
