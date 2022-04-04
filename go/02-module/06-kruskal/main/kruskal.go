@@ -82,13 +82,12 @@ func SpanningTree(es Edges) {
 	var sum float64 = 0
 	for _, e := range esResult {
 
-		//PrintEdge(e)
 		sum += e.weight
 	}
 	fmt.Printf("%.2f\n", sum)
 }
 
-/*func PrintEdge(e *Edge) {
+func PrintEdge(e *Edge) {
 
 	fmt.Printf("u: %.1f, %.1f, v: %.1f, %.1f; len: %.2f\n", e.u.x, e.u.y, e.v.x, e.v.y, e.weight)
 }
@@ -98,7 +97,7 @@ func PrintEdges(es Edges) {
 	for _, e := range es {
 		PrintEdge(e)
 	}
-}*/
+}
 
 func main() {
 

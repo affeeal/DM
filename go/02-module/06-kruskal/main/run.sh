@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go run main.go < input.txt > output.txt
+go run main.go < input.txt
