@@ -11,8 +11,6 @@ type Vertex struct {
 	l             *list.List
 }
 
-// x is needed for debug
-// r is a number of vertices in a component
 // mark: -1 == white, 0 == gray, 1 == black
 
 type Vertices []*Vertex
@@ -51,22 +49,22 @@ func QueueEmpty(q *Queue) bool {
 
 func Enqueue(q *Queue, v *Vertex) {
 
-	(*q).data[(*q).tail] = v
-	(*q).tail++
-	if (*q).tail == (*q).cap {
-		(*q).tail = 0
+	q.data[q.tail] = v
+	q.tail++
+	if q.tail == q.cap {
+		q.tail = 0
 	}
-	(*q).count++
+	q.count++
 }
 
 func Dequeue(q *Queue) *Vertex {
 
-	v := (*q).data[(*q).head]
+	v := q.data[q.head]
 	(*q).head++
-	if (*q).head == (*q).cap {
-		(*q).head = 0
+	if q.head == q.cap {
+		q.head = 0
 	}
-	(*q).count--
+	q.count--
 	return v
 }
 
