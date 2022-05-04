@@ -1,42 +1,92 @@
 package main
 
 import (
+	"container/list"
 	"fmt"
+	"io"
 	"os"
 )
 
 // global variables are declared with capital letters.
 
 var (
-	POS, LEN int
-	SYM      byte
-	STR      []byte
-	TOKENS   []string
+	POS    int
+	LEN    int
+	SYM    byte
+	STR    []byte
+	TOKENS []string
+
+	TIME  int
+	COUNT int
+	VS    Vertices
 )
+
+// used structures
+
+type Stack struct {
+	data     Vertices
+	cap, top int
+}
+
+type Vertex struct {
+	name          string
+	comp, T1, low int
+	l             *list.List
+}
+
+type Vertices []*Vertex
+
+// Vertex functions
+
+func InitVertex(name string) *Vertex {
+	v := new(Vertex)
+	v.name = name
+	v.comp, v.low, v.T1 = 0, 0, 0
+	v.l = list.New()
+	return v
+}
+
+// Stack functions
+
+func InitStack(N int) *Stack {
+	s := new(Stack)
+	s.data = make(Vertices, N)
+	s.cap, s.top = 0, 0
+	return s
+}
+
+func Push(s *Stack, v *Vertex) {
+	s.data[s.top] = v
+	s.top++
+}
+
+func Pop(s *Stack) *Vertex {
+	s.top--
+	return s.data[s.top]
+}
 
 // auxiliary BNF functions
 
-func is_letter() bool {
+func IsLetter() bool {
 	return SYM >= 'a' && SYM <= 'z' || SYM >= 'A' && SYM <= 'Z'
 }
 
-func is_number() bool {
+func IsNumber() bool {
 	return SYM >= '0' && SYM <= '9'
 }
 
-func is_comparison_op() (bool, string) {
-
+func IsComparisonOp() (bool, string) {
 	if SYM == '=' {
 		return true, "="
-	} else if SYM == '<' && has_next() {
-		if is_next('>') {
+	} else if SYM == '<' && HasNext() {
+		if IsNext('>') {
 			return true, "<>"
-		} else if is_next('=') {
+		} else if IsNext('=') {
 			return true, "<="
 		}
 		return true, "<"
-	} else if SYM == '>' && has_next() {
-		if is_next('=') {
+	} else if SYM == '>' && HasNext() {
+		if IsNext('=') {
 			return true, ">="
 		}
 		return true, ">"
@@ -44,15 +94,15 @@ func is_comparison_op() (bool, string) {
 	return false, ""
 }
 
-func has_next() bool {
+func HasNext() bool {
 	return POS+1 != LEN
 }
 
-func is_next(sym byte) bool {
+func IsNext(sym byte) bool {
 	return STR[POS+1] == sym
 }
 
-func increase_pos(pos int) {
+func IncreasePos(pos int) {
 	for i := 0; i < pos; i++ {
 		POS++
 	}
@@ -60,22 +110,22 @@ func increase_pos(pos int) {
 		SYM = STR[POS]
 	} else {
 		if SYM != ';' {
-			error()
+			Error()
 		}
 	}
 }
 
-func add_token(token string) {
+func AddToken(token string) {
 	TOKENS = append(TOKENS, token)
 }
 
-func error() {
-	error_debug()
-	fmt.Println("error")
+func Error() {
+	ErrorDebug()
+	fmt.Println("Error")
 	os.Exit(1)
 }
 
-func error_debug() {
+func ErrorDebug() {
 	fmt.Printf("POS: %d, SYM: %c\n", POS, SYM)
 	fmt.Println(TOKENS)
 }
@@ -83,247 +133,279 @@ func error_debug() {
 // BNF
 
 /*
-<program> ::= <function> <program>
+<Program> ::= <Function> <Program>
 
-<function> ::= <ident> ( <formal-args-list> ) ':=' <expr> ;
+<Function> ::= <Ident> ( <formal-args-list> ) ':=' <Expr> ;
 
-<formal-args-list> ::= <ident-list> |
-<ident-list> ::= <ident> | <ident> ',' <ident-list>
+<formal-args-list> ::= <Ident-list> |
+<Ident-list> ::= <Ident> | <Ident> ',' <Ident-list>
 
-<expr> ::= <comparison_expr> '?' <comparison_expr> ':' <expr> | <comparison_expr>
+<Expr> ::= <ComparisonExpr> '?' <ComparisonExpr> ':' <Expr> | <ComparisonExpr>
 
-<comparison_expr> ::= <arith_expr> <comparison_op> <arith_expr> | <arith_expr>
+<ComparisonExpr> ::= <ArithExpr> <comparison_op> <ArithExpr> | <ArithExpr>
 <comparison_op> ::= '=' | '<>' | '<' | '>' | '<=' | '>='
 
-<arith_expr> ::= <term> <ARITH_EXPR>
-<ARITH_EXPR> ::= '+' <term> <ARITH_EXPR> | '-' <term> <ARITH_EXPR> |
+<ArithExpr> ::= <Term> <arithExpr>
+<arithExpr> ::= '+' <Term> <arithExpr> | '-' <Term> <arithExpr> |
 
-<term> ::= <factor> <TERM>
-<TERM> ::= '*' <factor> <TERM> | '/' <factor> <TERM> |
+<Term> ::= <Factor> <term>
+<term> ::= '*' <Factor> <term> | '/' <Factor> <term> |
 
-<factor> ::=
-  <number>
-  | <ident>
-  | <ident> ( <actual_args_list> )
-  | ( <expr> )
-  | '-' <factor>
+<Factor> ::=
+  <Number>
+  | <Ident>
+  | <Ident> ( <ActualArgsList> )
+  | ( <Expr> )
+  | '-' <Factor>
 
-<actual_args_list> ::= <expr-list> |
-<expr-list> ::= <expr> | <expr> ',' <expr-list>
+<ActualArgsList> ::= <Expr-list> |
+<Expr-list> ::= <Expr> | <Expr> ',' <Expr-list>
 */
 
-func program() {
-	function()
+func Program() {
+	Function()
 	if POS < LEN {
-		program()
+		Program()
 	}
 }
 
-func function() {
-
-	ident()
+func Function() {
+	Ident()
 	if SYM == '(' {
-		add_token("(")
-		increase_pos(1)
+		AddToken("(")
+		IncreasePos(1)
 
-		formal_args_list()
+		FormalArgsList()
 		if SYM == ')' {
-			add_token(")")
-			increase_pos(1)
+			AddToken(")")
+			IncreasePos(1)
 
-			if SYM == ':' && has_next() && is_next('=') {
-				add_token(":=")
-				increase_pos(2)
+			if SYM == ':' && HasNext() && IsNext('=') {
+				AddToken(":=")
+				IncreasePos(2)
 
-				expr()
+				Expr()
 				if SYM == ';' {
-					add_token(";")
-					increase_pos(1)
+					AddToken(";")
+					IncreasePos(1)
 					return
 				}
 			}
 		}
 	}
-	error()
+	Error()
 }
 
-func ident() {
-	if is_letter() {
+func Ident() {
+	if IsLetter() {
 		var id []byte
-		for is_letter() || is_number() {
+		for IsLetter() || IsNumber() {
 			id = append(id, SYM)
-			increase_pos(1)
+			IncreasePos(1)
 		}
-		add_token(string(id))
+		AddToken(string(id))
 	} else {
-		error()
+		Error()
 	}
 }
 
-func formal_args_list() {
-
+func FormalArgsList() {
 	if SYM == ')' {
 		return
 	}
-	ident_list()
+	IdentList()
 }
 
-func ident_list() {
-	ident()
+func IdentList() {
+	Ident()
 	if SYM == ',' {
-		add_token(",")
-		increase_pos(1)
+		AddToken(",")
+		IncreasePos(1)
 
-		ident_list()
+		IdentList()
 	}
 }
 
-func expr() {
-	comparison_expr()
+func Expr() {
+	ComparisonExpr()
 	if SYM == '?' {
-		add_token("?")
-		increase_pos(1)
+		AddToken("?")
+		IncreasePos(1)
 
-		comparison_expr()
+		ComparisonExpr()
 		if SYM == ':' {
-			add_token(":")
-			increase_pos(1)
+			AddToken(":")
+			IncreasePos(1)
 
-			expr()
+			Expr()
 			return
 		}
-		error()
+		Error()
 	}
 }
 
-func comparison_expr() {
-	arith_expr()
-	verdict, op := is_comparison_op()
+func ComparisonExpr() {
+	ArithExpr()
+	verdict, op := IsComparisonOp()
 	if verdict {
-		add_token(op)
-		increase_pos(len(op))
+		AddToken(op)
+		IncreasePos(len(op))
 
-		arith_expr()
+		ArithExpr()
 	}
 }
 
-func arith_expr() {
-	term()
-	ARITH_EXPR()
+func ArithExpr() {
+	Term()
+	arithExpr()
 }
 
-func ARITH_EXPR() {
+func arithExpr() {
 	if SYM == '+' || SYM == '-' {
-		add_token(string(SYM))
-		increase_pos(1)
+		AddToken(string(SYM))
+		IncreasePos(1)
 
-		term()
-		ARITH_EXPR()
+		Term()
+		arithExpr()
 	}
+}
+
+func Term() {
+	Factor()
+	term()
 }
 
 func term() {
-	factor()
-	TERM()
-}
-
-func TERM() {
 	if SYM == '*' || SYM == '/' {
-		add_token(string(SYM))
-		increase_pos(1)
+		AddToken(string(SYM))
+		IncreasePos(1)
 
-		factor()
-		TERM()
+		Factor()
+		term()
 	}
 }
 
-func factor() {
-	if is_number() {
-		number()
+func Factor() {
+	if IsNumber() {
+		Number()
 		return
 	} else if SYM == '-' {
-		add_token("-")
-		increase_pos(1)
+		AddToken("-")
+		IncreasePos(1)
 
-		factor()
+		Factor()
 		return
 	} else if SYM == '(' {
-		add_token("(")
-		increase_pos(1)
+		AddToken("(")
+		IncreasePos(1)
 
-		expr()
+		Expr()
 
 		if SYM == ')' {
-			add_token(")")
-			increase_pos(1)
+			AddToken(")")
+			IncreasePos(1)
 			return
 		}
-		error()
+		Error()
 	}
-	ident()
+	Ident()
 	if SYM == '(' {
-		add_token("(")
-		increase_pos(1)
+		AddToken("(")
+		IncreasePos(1)
 
-		actual_args_list()
+		ActualArgsList()
 		if SYM == ')' {
-			add_token(")")
-			increase_pos(1)
+			AddToken(")")
+			IncreasePos(1)
 			return
 		}
-		error()
+		Error()
 	}
 }
 
-func number() {
+func Number() {
 	var num []byte
-	for is_number() {
+	for IsNumber() {
 		num = append(num, SYM)
-		increase_pos(1)
+		IncreasePos(1)
 	}
-	add_token(string(num))
+	AddToken(string(num))
 }
 
-func actual_args_list() {
+func ActualArgsList() {
 	if SYM == ')' {
 		return
 	}
-	expr_list()
+	ExprList()
 }
 
-func expr_list() {
-	expr()
+func ExprList() {
+	Expr()
 	if SYM == ',' {
-		add_token(",")
-		increase_pos(1)
+		AddToken(",")
+		IncreasePos(1)
 
-		expr_list()
+		ExprList()
 	}
 }
 
 // main functions
 
-func DeleteWhitespaces(src_str string) []byte {
-
-	var temp_str []byte
-	for _, sym := range []byte(src_str) {
-		if sym != ' ' && sym != '\n' {
-			temp_str = append(temp_str, sym)
+func Tarjan(vs *Vertices) {
+	s := InitStack(len(*vs))
+	for _, v := range *vs {
+		if v.T1 == 0 {
+			VisitVertexTarjan(vs, v, s)
 		}
 	}
-	return temp_str
+}
+
+func VisitVertexTarjan(vs *Vertices, v *Vertex, s *Stack) {
+	v.T1, v.low = TIME, TIME
+	TIME++
+	Push(s, v)
+	for e := v.l.Front(); e != nil; e = e.Next() {
+		u := e.Value.(*Vertex)
+		if u.T1 == 0 {
+			VisitVertexTarjan(vs, u, s)
+		}
+		if u.comp == 0 && v.low > u.low {
+			v.low = u.low
+		}
+	}
+	if v.T1 == v.low {
+		for {
+			u := Pop(s)
+			u.comp = COUNT
+			if u == v {
+				break
+			}
+		}
+		COUNT++
+	}
 }
 
 func main() {
 
-	src_str := "fib(n) := fibrec(1,1,n);\nfibrec(a,b,n) := n=1 ? a : fibrec(b,a+b,n-1);"
+	var sym byte
+	for {
+		_, err := fmt.Scanf("%c", &sym)
+		if err == io.EOF {
+			break
+		}
 
-	STR = DeleteWhitespaces(src_str)
+		if sym != ' ' && sym != '\n' && sym != '\t' {
+			STR = append(STR, sym)
+		}
+	}
+
 	LEN = len(STR)
 	POS = 0
-	SYM = STR[0]
+	SYM = STR[POS]
 
-	program()
-
+	Program()
 	fmt.Println(TOKENS)
+
+	TIME, COUNT = 1, 1
+	// ...
 }

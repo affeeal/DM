@@ -1,0 +1,2 @@
+fib(n) := fibrec(1,1,n);
+fibrec(a,b,n) := n=1 ? a : fibrec(b,a+b,n-1);
