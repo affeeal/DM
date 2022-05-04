@@ -1,0 +1,39 @@
+<program> ::= <function> <program>
+
+<function> ::= <ident> ( <formal-args-list> ) ':=' <expr> ;
+
+<formal-args-list> ::= <ident-list> |
+<ident-list> ::=
+  <ident>
+  | <ident> ',' <ident-list>
+
+<expr> ::=
+  <comparison_expr> '?' <comparison_expr> ':' <expr>
+  | <comparison_expr>
+
+<comparison_expr> ::=
+  <arith_expr> <comparison_op> <arith_expr>
+  | <arith_expr>
+<comparison_op> ::= '=' | '<>' | '<' | '>' | '<=' | '>='
+
+<arith_expr> ::=
+  <arith_expr> '+' <term>
+  | <arith_expr> '-' <term>
+  | <term>
+
+<term> ::=
+  <term> '*' <factor>
+  | <term> '/' <factor>
+  | <factor>
+
+<factor> ::=
+  <number>
+  | <ident>
+  | <ident> ( <actual_args_list> )
+  | ( <expr> )
+  | '-' <factor>
+
+<actual_args_list> ::= <expr-list> |
+<expr-list> ::=
+  <expr>
+  | <expr> ',' <expr-list>
