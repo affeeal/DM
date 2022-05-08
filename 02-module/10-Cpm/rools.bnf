@@ -1,0 +1,3 @@
+<sentence> ::= <jobs> ';'
+<jobs> ::= <job> | <job> '<' <jobs>
+<job> ::= <name> ( <duration> ) | <name>
