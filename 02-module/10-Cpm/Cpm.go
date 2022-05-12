@@ -49,6 +49,16 @@ func InitVertex(name string, time int) *Vertex {
 	return v
 }
 
+func FindChild() bool {
+	for e := PV.children.Front(); e != nil; e = e.Next() {
+		u := e.Value.(*Vertex)
+		if u == CV {
+			return true
+		}
+	}
+	return false
+}
+
 func FindByName(name string) *Vertex {
 	for _, v := range VS {
 		if v.name == name {
@@ -69,7 +79,7 @@ func FindRoot() *Vertex {
 
 func FindEnd() *Vertex {
 	for _, v := range VS {
-		if v.children.Front() == nil {
+		if v.children.Front() == nil && v.status != 0 {
 			return v
 		}
 	}
@@ -138,7 +148,7 @@ func Job() {
 	if !isInitialisation {
 		CV = FindByName(name)
 	}
-	if PV != nil {
+	if PV != nil && !FindChild() {
 		CV.parents.PushBack(PV)
 		PV.children.PushBack(CV)
 	}
@@ -215,18 +225,8 @@ func PrintVertices() {
 func CheckForCycles() {
 	TIME, COUNT = 1, 1
 	Tarjan()
-	comps := make([]list.List, COUNT-1)
-	for _, v := range VS {
-		comps[v.comp-1].PushBack(v)
-	}
-	for _, l := range comps {
-		if l.Len() != 1 {
-			for e := l.Front(); e != nil; e = e.Next() {
-				u := e.Value.(*Vertex)
-				u.status = 0
-			}
-		}
-	}
+	MarkCycleVertices()
+	MarkCycleChildren()
 }
 
 func Tarjan() {
@@ -260,6 +260,44 @@ func VisitVertexTarjan(v *Vertex, s *Stack) {
 			}
 		}
 		COUNT++
+	}
+}
+
+func MarkCycleVertices() {
+	comps := make([]list.List, COUNT-1)
+	for _, v := range VS {
+		comps[v.comp-1].PushBack(v)
+	}
+	for _, l := range comps {
+		if l.Len() != 1 {
+			for e := l.Front(); e != nil; e = e.Next() {
+				u := e.Value.(*Vertex)
+				u.status = 0
+			}
+		}
+	}
+}
+
+func MarkCycleChildren() {
+	for _, v := range VS {
+		if v.status == 0 {
+			for e := v.children.Front(); e != nil; e = e.Next() {
+				u := e.Value.(*Vertex)
+				if u.status == -1 {
+					hasValidParents := false
+					for e := u.parents.Front(); e != nil; e = e.Next() {
+						w := e.Value.(*Vertex)
+						if w.status == -1 {
+							hasValidParents = true
+							break
+						}
+					}
+					if !hasValidParents {
+						u.status = 0
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -313,10 +351,11 @@ func PrintGraph() {
 	fmt.Println("digraph {")
 	for _, v := range VS {
 		fmt.Printf("\t%s", v.name)
+		fmt.Printf(" [label=\"%s(%d)\"", v.name, v.time)
 		if v.status == 1 {
-			fmt.Print(" [color=red]")
+			fmt.Print(", color=red")
 		}
-		fmt.Println()
+		fmt.Println("]")
 	}
 	for _, v := range VS {
 		for e := v.children.Front(); e != nil; e = e.Next() {
@@ -336,6 +375,7 @@ func main() {
 	NextSym()
 
 	Sentences()
+
 	CheckForCycles()
 
 	r := FindRoot()
