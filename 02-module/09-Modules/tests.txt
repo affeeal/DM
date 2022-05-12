@@ -1,0 +1,10 @@
+fact(x) := x=0 ? 1 : x*fact(x-1);
+fib(n) := fibrec(1,1,n);
+fibrec(a,b,n) := n=1 ? a : fibrec(b,a+b,n-1);
+=> 3
+
+compareIntegersAbs(n, m) := n>=0 ? (m>=0 ? compareNaturals(n,m) : makePositiveM(n,m)) : makePositiveN(n,m);
+makePositiveN(n,m) := compareIntegersAbs(-n,m);
+makePositiveM(n,m) := compareIntegersAbs(n,-m);
+compareNaturals(n,m) := n>m ? 1 : 0;
+=> 2

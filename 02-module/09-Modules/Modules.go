@@ -10,15 +10,19 @@ import (
 // global variables are declared with capital letters.
 
 var (
-	POS    int
-	LEN    int
-	SYM    byte
-	STR    []byte
-	TOKENS []string
+	POS     int
+	LEN     int
+	SYM     byte
+	PROGRAM []byte
+	TOKENS  []string
 
 	TIME  int
 	COUNT int
-	VS    Vertices
+
+	CV *Vertex // current vertex
+	V  *Vertex
+
+	VS Vertices
 )
 
 // used structures
@@ -31,7 +35,7 @@ type Stack struct {
 type Vertex struct {
 	name          string
 	comp, T1, low int
-	l             *list.List
+	children      *list.List
 }
 
 type Vertices []*Vertex
@@ -42,8 +46,17 @@ func InitVertex(name string) *Vertex {
 	v := new(Vertex)
 	v.name = name
 	v.comp, v.low, v.T1 = 0, 0, 0
-	v.l = list.New()
+	v.children = list.New()
 	return v
+}
+
+func Find() (bool, *Vertex) {
+	for _, v := range VS {
+		if v.name == TOKENS[len(TOKENS)-1] {
+			return true, v
+		}
+	}
+	return false, nil
 }
 
 // Stack functions
@@ -99,7 +112,7 @@ func HasNext() bool {
 }
 
 func IsNext(sym byte) bool {
-	return STR[POS+1] == sym
+	return PROGRAM[POS+1] == sym
 }
 
 func IncreasePos(pos int) {
@@ -107,7 +120,7 @@ func IncreasePos(pos int) {
 		POS++
 	}
 	if POS != LEN {
-		SYM = STR[POS]
+		SYM = PROGRAM[POS]
 	} else {
 		if SYM != ';' {
 			Error()
@@ -120,14 +133,8 @@ func AddToken(token string) {
 }
 
 func Error() {
-	ErrorDebug()
-	fmt.Println("Error")
+	fmt.Println("error")
 	os.Exit(1)
-}
-
-func ErrorDebug() {
-	fmt.Printf("POS: %d, SYM: %c\n", POS, SYM)
-	fmt.Println(TOKENS)
 }
 
 // BNF
@@ -171,6 +178,12 @@ func Program() {
 
 func Function() {
 	Ident()
+	var VertexInVS bool
+	VertexInVS, CV = Find()
+	if !VertexInVS {
+		CV = InitVertex(TOKENS[len(TOKENS)-1])
+		VS = append(VS, CV)
+	}
 	if SYM == '(' {
 		AddToken("(")
 		IncreasePos(1)
@@ -310,6 +323,14 @@ func Factor() {
 	}
 	Ident()
 	if SYM == '(' {
+		var VertexInVS bool
+		VertexInVS, V = Find()
+		if !VertexInVS {
+			V = InitVertex(TOKENS[len(TOKENS)-1])
+			VS = append(VS, V)
+		}
+		CV.children.PushBack(V)
+
 		AddToken("(")
 		IncreasePos(1)
 
@@ -349,25 +370,38 @@ func ExprList() {
 	}
 }
 
+// auxiliary functions
+
+func PrintVertices() {
+	for _, v := range VS {
+		fmt.Printf("%s:", v.name)
+		for e := v.children.Front(); e != nil; e = e.Next() {
+			u := e.Value.(*Vertex)
+			fmt.Printf(" %s;", u.name)
+		}
+		fmt.Println()
+	}
+}
+
 // main functions
 
-func Tarjan(vs *Vertices) {
-	s := InitStack(len(*vs))
-	for _, v := range *vs {
+func Tarjan() {
+	s := InitStack(len(VS))
+	for _, v := range VS {
 		if v.T1 == 0 {
-			VisitVertexTarjan(vs, v, s)
+			VisitVertexTarjan(v, s)
 		}
 	}
 }
 
-func VisitVertexTarjan(vs *Vertices, v *Vertex, s *Stack) {
+func VisitVertexTarjan(v *Vertex, s *Stack) {
 	v.T1, v.low = TIME, TIME
 	TIME++
 	Push(s, v)
-	for e := v.l.Front(); e != nil; e = e.Next() {
+	for e := v.children.Front(); e != nil; e = e.Next() {
 		u := e.Value.(*Vertex)
 		if u.T1 == 0 {
-			VisitVertexTarjan(vs, u, s)
+			VisitVertexTarjan(u, s)
 		}
 		if u.comp == 0 && v.low > u.low {
 			v.low = u.low
@@ -395,17 +429,18 @@ func main() {
 		}
 
 		if sym != ' ' && sym != '\n' && sym != '\t' {
-			STR = append(STR, sym)
+			PROGRAM = append(PROGRAM, sym)
 		}
 	}
 
-	LEN = len(STR)
+	LEN = len(PROGRAM)
 	POS = 0
-	SYM = STR[POS]
+	SYM = PROGRAM[POS]
 
 	Program()
-	fmt.Println(TOKENS)
 
 	TIME, COUNT = 1, 1
-	// ...
+	Tarjan()
+	PrintVertices()
+	fmt.Println(COUNT - 1)
 }
