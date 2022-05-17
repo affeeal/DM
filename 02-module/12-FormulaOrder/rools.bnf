@@ -1,0 +1,15 @@
+<formulas> ::= <formula> <formulas> | Ɛ
+
+<formula> ::= <ident_list> '=' <expr_list>
+
+<ident_list> ::= <ident> <another_ident>
+<another_ident> ::= ',' <ident_list> | Ɛ
+
+<expr_list> ::= <expr> <another_expr>
+<another_expr> ::= ',' <expr_list> | Ɛ
+
+<expr> ::= <term> expr_
+expr_ ::= '+' <term> expr_ | '-' <term> expr_ | Ɛ
+<term> ::= <factor> term_
+term_ ::= '*' <factor> term_ | '/' <factor> term_ | Ɛ
+<factor> ::= <number> | <ident> | '(' <expr> ')' | '-' <factor>
