@@ -8,8 +8,8 @@
 <expr_list> ::= <expr> <another_expr>
 <another_expr> ::= ',' <expr_list> | Ɛ
 
-<expr> ::= <term> expr_
-expr_ ::= '+' <term> expr_ | '-' <term> expr_ | Ɛ
-<term> ::= <factor> term_
-term_ ::= '*' <factor> term_ | '/' <factor> term_ | Ɛ
+<expr> ::= <term> <expr_>
+<expr_> ::= '+' <term> <expr_> | '-' <term> <expr_> | Ɛ
+<term> ::= <factor> <term_>
+<term_> ::= '*' <factor> <term_> | '/' <factor> <term_> | Ɛ
 <factor> ::= <number> | <ident> | '(' <expr> ')' | '-' <factor>
