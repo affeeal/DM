@@ -1,0 +1,27 @@
+B = D + A + y
+D = A + x
+F = D + B
+A = x + y
+K = D + B
+x, y = 1, 1
+
+=>
+K = D + B
+F = D + B
+B = D + A + y
+D = A + x
+A = x + y
+x , y = 1 , 1
+
+c = 1 * g
+l = a - 1
+n = (-4) - k
+z = 5
+a = x - z * y
+y = z - 4
+k = a
+f = l - c
+g = 4 * l
+x = z + 11
+i = 2 * (n + k)
+

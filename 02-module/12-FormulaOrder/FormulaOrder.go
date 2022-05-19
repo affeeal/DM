@@ -1,48 +1,119 @@
 package main
 
 import (
+	"container/list"
 	"fmt"
 	"io"
 	"os"
 )
 
+// used structures
+
 type Tag int
 
 type Token struct {
 	Tag
-	Image string
+	image string
 }
 
+// Coordinates store information about the start and end positions
+// of the formula corresponding to the vertex in the TOKENS array.
+
+type Coordinates struct {
+	start int
+	end   int
+}
+
+type Colour int
+
+type Vertex struct {
+	image       string
+	isDeclared  bool
+	mark        Colour
+	coordinates *Coordinates
+	children    *list.List
+}
+
+type Vertices []*Vertex
+
+// used constants and global variables
+
 const (
-	NUMBER Tag = 1 << iota // 1
-	IDENT                  // 2
-	PLUS                   // 4
-	MINUS                  // 8
-	MUL                    // 16
-	DIV                    // 32
-	LPAREN                 // 64
-	RPAREN                 // 128
-	COMMA                  // 256
-	EQUAL                  // 512
+	NUMBER Tag = 1 << iota
+	IDENT
+	PLUS
+	MINUS
+	MUL
+	DIV
+	LPAREN
+	RPAREN
+	COMMA
+	EQUAL
+)
+
+const (
+	WHITE Colour = -1 + iota
+	GRAY
+	BLACK
 )
 
 var (
 	FORMULAS     []byte
-	SYM          byte
 	FORMULAS_LEN int
+	SYM          byte
 
 	POS int
 
-	TOKENS            []Token
-	TOKEN             Token
-	TOKENS_LEN        int
-	NUM_OF_LEFT_ARGS  int
-	NUM_OF_RIGHT_ARGS int
+	TOKENS     []Token
+	TOKENS_LEN int
+	TOKEN      Token
+
+	GRAPH Vertices
+
+	DEFINED_VERTICES Vertices
+	DEFINED_VERTEX   *Vertex
+
+	IDENT_LIST_LEN int
+	EXPR_LIST_LEN  int
+	COORDINATES    *Coordinates
+
+	SORTED_LIST *list.List
 )
+
+// Vertex functions
+
+func InitVertex(image string, isDeclared bool) *Vertex {
+	v := new(Vertex)
+	v.image = image
+	v.mark = WHITE
+	v.isDeclared = isDeclared
+	v.coordinates = new(Coordinates)
+	v.children = list.New()
+	return v
+}
+
+func IsVertexInGraph(image string) (bool, *Vertex) {
+	for _, v := range GRAPH {
+		if v.image == image {
+			return true, v
+		}
+	}
+	return false, nil
+}
+
+func IsChild(v *Vertex) bool {
+	for e := DEFINED_VERTEX.children.Front(); e != nil; e = e.Next() {
+		u := e.Value.(*Vertex)
+		if u.image == v.image {
+			return true
+		}
+	}
+	return false
+}
 
 // scanning
 
-func scan_formulas() {
+func ScanFormulas() {
 	var sym byte
 	for {
 		_, err := fmt.Scanf("%c", &sym)
@@ -58,88 +129,88 @@ func scan_formulas() {
 
 // tokenizing
 
-func tokenize() {
+func Tokenize() {
 	POS = -1
-	next_sym()
-	for in_formulas_bounds() {
-		if sym_is_a_letter() {
-			add_token(IDENT, ident())
-		} else if sym_is_a_number() {
-			add_token(NUMBER, number())
+	NextSym()
+	for InBoundsFORMUALS() {
+		if SymIsALetter() {
+			AddToken(IDENT, Ident())
+		} else if SymIsANumber() {
+			AddToken(NUMBER, Number())
 		} else if SYM == '+' {
-			add_token(PLUS, string(SYM))
-			next_sym()
+			AddToken(PLUS, string(SYM))
+			NextSym()
 		} else if SYM == '-' {
-			add_token(MINUS, string(SYM))
-			next_sym()
+			AddToken(MINUS, string(SYM))
+			NextSym()
 		} else if SYM == '*' {
-			add_token(MUL, string(SYM))
-			next_sym()
+			AddToken(MUL, string(SYM))
+			NextSym()
 		} else if SYM == '/' {
-			add_token(DIV, string(SYM))
-			next_sym()
+			AddToken(DIV, string(SYM))
+			NextSym()
 		} else if SYM == '(' {
-			add_token(LPAREN, string(SYM))
-			next_sym()
+			AddToken(LPAREN, string(SYM))
+			NextSym()
 		} else if SYM == ')' {
-			add_token(RPAREN, string(SYM))
-			next_sym()
+			AddToken(RPAREN, string(SYM))
+			NextSym()
 		} else if SYM == ',' {
-			add_token(COMMA, string(SYM))
-			next_sym()
+			AddToken(COMMA, string(SYM))
+			NextSym()
 		} else if SYM == '=' {
-			add_token(EQUAL, string(SYM))
-			next_sym()
+			AddToken(EQUAL, string(SYM))
+			NextSym()
 		} else if SYM == '\n' {
-			next_sym()
+			NextSym()
 		} else {
-			syntax_error()
+			SyntaxError()
 		}
 	}
 	TOKENS_LEN = len(TOKENS)
 }
 
-func next_sym() {
+func NextSym() {
 	POS++
-	if in_formulas_bounds() {
+	if InBoundsFORMUALS() {
 		SYM = FORMULAS[POS]
 	}
 }
 
-func in_formulas_bounds() bool {
+func InBoundsFORMUALS() bool {
 	return POS != FORMULAS_LEN
 }
 
-func add_token(tag Tag, image string) {
+func AddToken(tag Tag, image string) {
 	TOKENS = append(TOKENS, Token{tag, image})
 }
 
-func sym_is_a_letter() bool {
+func SymIsALetter() bool {
 	return SYM >= 'a' && SYM <= 'z' || SYM >= 'A' && SYM <= 'Z'
 }
 
-func sym_is_a_number() bool {
+func SymIsANumber() bool {
 	return SYM >= '0' && SYM <= '9'
 }
 
-func ident() string {
+func Ident() string {
 	// SYM is a letter
-	var new_ident []byte
-	for in_formulas_bounds() && (sym_is_a_letter() || sym_is_a_number()) {
-		new_ident = append(new_ident, SYM)
-		next_sym()
+	var newIdent []byte
+	for InBoundsFORMUALS() && (SymIsALetter() || SymIsANumber()) {
+		newIdent = append(newIdent, SYM)
+		NextSym()
 	}
-	return string(new_ident)
+	return string(newIdent)
 }
 
-func number() string {
+func Number() string {
 	// SYM is a number
-	var new_number []byte
-	for in_formulas_bounds() && sym_is_a_number() {
-		new_number = append(new_number, SYM)
-		next_sym()
+	var newNumber []byte
+	for InBoundsFORMUALS() && SymIsANumber() {
+		newNumber = append(newNumber, SYM)
+		NextSym()
 	}
-	return string(new_number)
+	return string(newNumber)
 }
 
 // parsing
@@ -162,136 +233,248 @@ func number() string {
 <factor> ::= <number> | <ident> | '(' <expr> ')' | '-' <factor>
 */
 
-func parse() {
+func Parse() {
 	POS = -1
-	next_token()
-	formulas()
+	NextToken()
+	Formulas()
 }
 
-func formulas() {
-	if in_tokens_bounds() {
-		NUM_OF_LEFT_ARGS = 1
-		NUM_OF_RIGHT_ARGS = 1
-		formula()
-		if NUM_OF_LEFT_ARGS != NUM_OF_RIGHT_ARGS {
-			syntax_error()
+func Formulas() {
+	if InBoundsTOKENS() {
+		IDENT_LIST_LEN = 1
+		EXPR_LIST_LEN = 1
+
+		DEFINED_VERTICES = Vertices{}
+		DEFINED_VERTEX = nil
+
+		COORDINATES = new(Coordinates)
+		COORDINATES.start = POS
+
+		Formula()
+		COORDINATES.end = POS - 1
+		for _, v := range DEFINED_VERTICES {
+			v.coordinates = COORDINATES
 		}
-		formulas()
+		if IDENT_LIST_LEN != EXPR_LIST_LEN {
+			SyntaxError()
+		}
+		Formulas()
 	}
 }
 
-func formula() {
-	ident_list()
+func Formula() {
+	IdentList()
 	if TOKEN.Tag&EQUAL == 0 {
-		syntax_error()
+		SyntaxError()
 	}
-	next_token()
-	expr_list()
+	NextToken()
+	ExprList()
 }
 
-func ident_list() {
+func IdentList() {
 	if TOKEN.Tag&IDENT == 0 {
-		syntax_error()
+		SyntaxError()
 	}
-	next_token()
-	another_ident()
-}
-
-func another_ident() {
-	if TOKEN.Tag&COMMA != 0 {
-		NUM_OF_LEFT_ARGS++
-		next_token()
-		ident_list()
-	}
-}
-
-func expr_list() {
-	expr()
-	another_expr()
-}
-
-func another_expr() {
-	if TOKEN.Tag&COMMA != 0 {
-		NUM_OF_RIGHT_ARGS++
-		next_token()
-		expr_list()
-	}
-}
-
-func expr() {
-	term()
-	expr_()
-}
-
-func expr_() {
-	if TOKEN.Tag&PLUS != 0 {
-		next_token()
-		term()
-		expr_()
-	} else if TOKEN.Tag&MINUS != 0 {
-		next_token()
-		term()
-		expr_()
-	}
-}
-
-func term() {
-	factor()
-	term_()
-}
-
-func term_() {
-	if TOKEN.Tag&MUL != 0 {
-		next_token()
-		factor()
-		term_()
-	} else if TOKEN.Tag&DIV != 0 {
-		next_token()
-		factor()
-		term_()
-	}
-}
-
-func factor() {
-	if TOKEN.Tag&NUMBER != 0 {
-		next_token()
-	} else if TOKEN.Tag&IDENT != 0 {
-		next_token()
-	} else if TOKEN.Tag&LPAREN != 0 {
-		next_token()
-		expr()
-		if TOKEN.Tag&RPAREN == 0 {
-			syntax_error()
+	verdict, v := IsVertexInGraph(TOKEN.image)
+	if verdict {
+		if v.isDeclared {
+			SyntaxError()
+		} else {
+			v.isDeclared = true
 		}
-		next_token()
-	} else if TOKEN.Tag&MINUS != 0 {
-		next_token()
-		factor()
 	} else {
-		syntax_error()
+		v = InitVertex(TOKEN.image, true)
+		GRAPH = append(GRAPH, v)
+	}
+	DEFINED_VERTICES = append(DEFINED_VERTICES, v)
+	NextToken()
+	AnotherIdent()
+}
+
+func AnotherIdent() {
+	if TOKEN.Tag&COMMA != 0 {
+		IDENT_LIST_LEN++
+		NextToken()
+		IdentList()
 	}
 }
 
-func next_token() {
+func ExprList() {
+	if EXPR_LIST_LEN > IDENT_LIST_LEN {
+		SyntaxError()
+	} else {
+		DEFINED_VERTEX = DEFINED_VERTICES[EXPR_LIST_LEN-1]
+	}
+	Expr()
+	AnotherExpr()
+}
+
+func AnotherExpr() {
+	if TOKEN.Tag&COMMA != 0 {
+		EXPR_LIST_LEN++
+		NextToken()
+		ExprList()
+	}
+}
+
+func Expr() {
+	Term()
+	Expr_()
+}
+
+func Expr_() {
+	if TOKEN.Tag&(PLUS|MINUS) != 0 {
+		NextToken()
+		Term()
+		Expr_()
+	}
+}
+
+func Term() {
+	Factor()
+	Term_()
+}
+
+func Term_() {
+	if TOKEN.Tag&(MUL|DIV) != 0 {
+		NextToken()
+		Factor()
+		Term_()
+	}
+}
+
+func Factor() {
+	if TOKEN.Tag&NUMBER != 0 {
+		NextToken()
+	} else if TOKEN.Tag&IDENT != 0 {
+		verdict, v := IsVertexInGraph(TOKEN.image)
+		if !verdict {
+			v = InitVertex(TOKEN.image, false)
+			GRAPH = append(GRAPH, v)
+		}
+		if !IsChild(v) {
+			DEFINED_VERTEX.children.PushBack(v)
+		}
+		NextToken()
+	} else if TOKEN.Tag&LPAREN != 0 {
+		NextToken()
+		Expr()
+		if TOKEN.Tag&RPAREN == 0 {
+			SyntaxError()
+		}
+		NextToken()
+	} else if TOKEN.Tag&MINUS != 0 {
+		NextToken()
+		Factor()
+	} else {
+		SyntaxError()
+	}
+}
+
+func NextToken() {
 	POS++
 	if POS != TOKENS_LEN {
 		TOKEN = TOKENS[POS]
 	}
 }
 
-func in_tokens_bounds() bool {
+func InBoundsTOKENS() bool {
 	return POS != TOKENS_LEN
 }
 
-func syntax_error() {
+func SyntaxError() {
 	fmt.Println("syntax error")
 	os.Exit(0)
+}
+
+// checking Vertices
+
+func CheckVerticesForDefinitions() {
+	for _, v := range GRAPH {
+		if !v.isDeclared {
+			SyntaxError()
+		}
+	}
+}
+
+func DFS() {
+	SORTED_LIST = list.New()
+	for _, v := range GRAPH {
+		VisitVertex(v)
+	}
+}
+
+func VisitVertex(v *Vertex) {
+	if v.mark == WHITE {
+		v.mark = GRAY
+		for e := v.children.Front(); e != nil; e = e.Next() {
+			u := e.Value.(*Vertex)
+			VisitVertex(u)
+		}
+		v.mark = BLACK
+		SORTED_LIST.PushFront(v)
+	} else if v.mark == GRAY {
+		Cycle()
+	}
+}
+
+func Cycle() {
+	fmt.Println("cycle")
+	os.Exit(0)
+}
+
+// printing vertices
+
+func PrintFormulas() {
+	cs := new([]*Coordinates)
+	for e := SORTED_LIST.Front(); e != nil; e = e.Next() {
+		v := e.Value.(*Vertex)
+		if FormulaIsNotPrinted(cs, v.coordinates) {
+			PrintFormula(cs, v)
+		}
+	}
+}
+
+func FormulaIsNotPrinted(cs *[]*Coordinates, c *Coordinates) bool {
+	for _, new_c := range *cs {
+		if new_c == c {
+			return false
+		}
+	}
+	return true
+}
+
+func PrintFormula(cs *[]*Coordinates, v *Vertex) {
+	for i := v.coordinates.start; i <= v.coordinates.end; i++ {
+		if i != v.coordinates.end {
+			fmt.Print(TOKENS[i].image + " ")
+		} else {
+			fmt.Println(TOKENS[i].image)
+		}
+	}
+	*cs = append(*cs, v.coordinates)
+}
+
+// auxiliary functions
+
+func PrintVertices() {
+	for _, v := range GRAPH {
+		fmt.Printf("%s(%t), {%d, %d}:", v.image, v.isDeclared, v.coordinates.start, v.coordinates.end)
+		for e := v.children.Front(); e != nil; e = e.Next() {
+			u := e.Value.(*Vertex)
+			fmt.Printf(" %s;", u.image)
+		}
+		fmt.Println()
+	}
 }
 
 // main
 
 func main() {
-	scan_formulas()
-	tokenize()
-	parse()
+	ScanFormulas()
+	Tokenize()
+	Parse()
+	CheckVerticesForDefinitions()
+	DFS()
+	PrintFormulas()
 }
