@@ -1,0 +1,96 @@
+4
+3
+0
+1 3 3
+1 1 2
+2 2 2
+1 2 3
+x y y
+y y x
+x x x
+x y y
+=>
+digraph {
+	rankdir = LR
+	0 -> 1 [label = "a(x)"]
+	0 -> 3 [label = "b(y)"]
+	0 -> 3 [label = "c(y)"]
+	1 -> 1 [label = "a(y)"]
+	1 -> 1 [label = "b(y)"]
+	1 -> 2 [label = "c(x)"]
+	2 -> 2 [label = "a(x)"]
+	2 -> 2 [label = "b(x)"]
+	2 -> 2 [label = "c(x)"]
+	3 -> 1 [label = "a(x)"]
+	3 -> 2 [label = "b(y)"]
+	3 -> 3 [label = "c(y)"]
+}
+
+3
+2
+0
+1 2
+1 2
+1 2
+lambda lambda
+0 0
+1 1
+=>
+digraph {
+	rankdir = LR
+	0 -> 1 [label = "a(lambda)"]
+	0 -> 2 [label = "b(lambda)"]
+	1 -> 1 [label = "a(0)"]
+	1 -> 2 [label = "b(0)"]
+	2 -> 1 [label = "a(1)"]
+	2 -> 2 [label = "b(1)"]
+}
+
+2
+4
+0
+0 0 0 1
+0 1 1 1
+0 1 1 0
+1 0 0 1
+=>
+digraph {
+	rankdir = LR
+	0 -> 0 [label = "a(0)"]
+	0 -> 0 [label = "b(1)"]
+	0 -> 0 [label = "c(1)"]
+	0 -> 1 [label = "d(0)"]
+	1 -> 0 [label = "a(1)"]
+	1 -> 1 [label = "b(0)"]
+	1 -> 1 [label = "c(0)"]
+	1 -> 1 [label = "d(1)"]
+}
+
+3
+5
+0
+1 2 2 1 1
+1 1 1 1 1
+1 2 2 2 2
+false lambda lambda false false
+lambda lambda lambda lambda lambda
+true lambda lambda lambda lambda
+=>
+digraph {
+	rankdir = LR
+	0 -> 1 [label = "a(false)"]
+	0 -> 2 [label = "b(lambda)"]
+	0 -> 2 [label = "c(lambda)"]
+	0 -> 1 [label = "d(false)"]
+	0 -> 1 [label = "e(false)"]
+	1 -> 1 [label = "a(lambda)"]
+	1 -> 1 [label = "b(lambda)"]
+	1 -> 1 [label = "c(lambda)"]
+	1 -> 1 [label = "d(lambda)"]
+	1 -> 1 [label = "e(lambda)"]
+	2 -> 1 [label = "a(true)"]
+	2 -> 2 [label = "b(lambda)"]
+	2 -> 2 [label = "c(lambda)"]
+	2 -> 2 [label = "d(lambda)"]
+	2 -> 2 [label = "e(lambda)"]
+}
