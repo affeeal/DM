@@ -71,7 +71,7 @@ func FindDistances(pv *PivotVertex, v *Vertex, d int) {
 	for e := v.l.Front(); e != nil; e = e.Next() {
 
 		u := e.Value.(*Vertex)
-		if pv.dist[u.x] == 0 && u.x != pv.v.x {
+		if pv.dist[u.x] == 0 && u.x != pv.v.x || pv.dist[u.x] > d {
 			pv.dist[u.x] = d
 		}
 	}
