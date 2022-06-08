@@ -110,7 +110,7 @@ func main() {
 	var k int
 	pvs := make(PivotVertices, K)
 	for i := 0; i < K; i++ {
-		fmt.Scanf("%d\n", &k)
+		fmt.Scanf("%d", &k)
 		pvs[i] = InitPivotVertex(vs[k], N)
 	}
 
