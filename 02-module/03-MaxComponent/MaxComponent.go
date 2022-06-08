@@ -133,7 +133,7 @@ func VisitVertex2(vs *Vertices, v *Vertex, component int) {
 	v.comp = component
 	for e := v.l.Front(); e != nil; e = e.Next() {
 		u := e.Value.(*Vertex)
-		if u.comp == -1 && u.parent != v {
+		if u.comp == -1 && u.parent == v {
 			VisitVertex2(vs, u, component)
 		}
 	}
