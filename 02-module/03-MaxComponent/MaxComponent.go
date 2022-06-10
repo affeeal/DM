@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"container/list"
 	"fmt"
+	"os"
 )
 
 type Vertex struct {
@@ -34,7 +36,6 @@ type Queue struct {
 // queue functions
 
 func InitQueue(N int) *Queue {
-
 	q := new(Queue)
 	q.data = make(Vertices, N)
 	q.cap = N
@@ -43,12 +44,10 @@ func InitQueue(N int) *Queue {
 }
 
 func QueueEmpty(q *Queue) bool {
-
 	return q.count == 0
 }
 
 func Enqueue(q *Queue, v *Vertex) {
-
 	q.data[q.tail] = v
 	q.tail++
 	if q.tail == q.cap {
@@ -58,7 +57,6 @@ func Enqueue(q *Queue, v *Vertex) {
 }
 
 func Dequeue(q *Queue) *Vertex {
-
 	v := q.data[q.head]
 	(*q).head++
 	if q.head == q.cap {
@@ -71,7 +69,6 @@ func Dequeue(q *Queue) *Vertex {
 // vertex functions
 
 func InitVertex(i int) *Vertex {
-
 	v := new(Vertex)
 	v.x = i
 	v.mark, v.comp = -1, -1
@@ -92,21 +89,18 @@ func InitComponent(i int) *Component {
 
 // main functions
 
-func DFS1(vs *Vertices, q *Queue) {
-
-	for _, v := range *vs {
+func DFS1(vs Vertices, q *Queue) {
+	for _, v := range vs {
 		if v.mark == -1 {
 			VisitVertex1(vs, v, q)
 		}
 	}
 }
 
-func VisitVertex1(vs *Vertices, v *Vertex, q *Queue) {
-
+func VisitVertex1(vs Vertices, v *Vertex, q *Queue) {
 	v.mark = 0
 	Enqueue(q, v)
 	for e := v.l.Front(); e != nil; e = e.Next() {
-
 		u := e.Value.(*Vertex)
 		if u.mark == -1 {
 			u.parent = v
@@ -116,8 +110,7 @@ func VisitVertex1(vs *Vertices, v *Vertex, q *Queue) {
 	v.mark = 1
 }
 
-func DFS2(vs *Vertices, q *Queue) int {
-
+func DFS2(vs Vertices, q *Queue) int {
 	component := 0
 	for !QueueEmpty(q) {
 		v := Dequeue(q)
@@ -129,7 +122,7 @@ func DFS2(vs *Vertices, q *Queue) int {
 	return component
 }
 
-func VisitVertex2(vs *Vertices, v *Vertex, component int) {
+func VisitVertex2(vs Vertices, v *Vertex, component int) {
 	v.comp = component
 	for e := v.l.Front(); e != nil; e = e.Next() {
 		u := e.Value.(*Vertex)
@@ -139,17 +132,16 @@ func VisitVertex2(vs *Vertices, v *Vertex, component int) {
 	}
 }
 
-func PrintGraph(vs *Vertices, c *Component) {
-
+func PrintGraph(vs Vertices, c *Component) {
 	fmt.Println("graph {")
-	for _, v := range *vs {
+	for _, v := range vs {
 		fmt.Printf("\t%d", v.x)
 		if v.comp == c.num {
 			fmt.Print(" [color=red]")
 		}
 		fmt.Println()
 	}
-	for _, v := range *vs {
+	for _, v := range vs {
 		for e := v.l.Front(); e != nil; e = e.Next() {
 			u := e.Value.(*Vertex)
 			if u.x > v.x {
@@ -162,26 +154,6 @@ func PrintGraph(vs *Vertices, c *Component) {
 		}
 	}
 	fmt.Println("}")
-}
-
-// auxiliary functions
-
-func PrintVertices(vs *Vertices) {
-
-	for _, v := range *vs {
-		fmt.Printf("%d(%d):", v.x, v.comp)
-		for e := v.l.Front(); e != nil; e = e.Next() {
-			fmt.Printf(" %d;", e.Value.(*Vertex).x)
-		}
-		fmt.Println()
-	}
-}
-
-func PrintComponents(cs *[]*Component) {
-
-	for i, c := range *cs {
-		fmt.Printf("%d: %d, %.0f\n", i, c.vCount, c.eCount)
-	}
 }
 
 // main function
@@ -197,16 +169,17 @@ func main() {
 		vs[i] = InitVertex(i)
 	}
 
-	var v, u int
+	bufstdin := bufio.NewReader(os.Stdin)
 	for i := 0; i < M; i++ {
-		fmt.Scanf("%d %d\n", &v, &u)
+		var v, u int
+		fmt.Fscan(bufstdin, &v, &u)
 		vs[v].l.PushBack(vs[u])
 		vs[u].l.PushBack(vs[v])
 	}
 
 	q := InitQueue(N)
-	DFS1(&vs, q)
-	c := DFS2(&vs, q)
+	DFS1(vs, q)
+	c := DFS2(vs, q)
 
 	//PrintVertices(&vs)
 
@@ -242,5 +215,5 @@ func main() {
 		}
 	}
 
-	PrintGraph(&vs, maxC)
+	PrintGraph(vs, maxC)
 }
