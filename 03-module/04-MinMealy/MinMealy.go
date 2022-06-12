@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"sort"
 )
 
@@ -169,9 +171,16 @@ func In(new_q *Vertex, new_Q Vertices) bool {
 	return false
 }
 
-func FindRoot(q_0 int, new_Q Vertices) *Vertex {
+func FindRoot(output []string, new_Q Vertices) *Vertex {
 	for _, q := range new_Q {
-		if q.i == q_0 {
+		eq := true
+		for i := 0; i < M; i++ {
+			if q.output[i] != output[i] {
+				eq = false
+				break
+			}
+		}
+		if eq {
 			return q
 		}
 	}
@@ -191,10 +200,9 @@ func PrintAutomata(Q Vertices) {
 }
 
 func main() {
+	bufstdin := bufio.NewReader(os.Stdin)
 	var q_0 int
-	fmt.Scanf("%d", &N)
-	fmt.Scanf("%d", &M)
-	fmt.Scanf("%d", &q_0)
+	fmt.Fscan(bufstdin, &N, &M, &q_0)
 	vs := make(Vertices, N)
 	for i := 0; i < N; i++ {
 		vs[i] = InitVertex(i)
@@ -202,20 +210,21 @@ func main() {
 	for i := 0; i < N; i++ {
 		for j := 0; j < M; j++ {
 			var q int
-			fmt.Scanf("%d", &q)
+			fmt.Fscan(bufstdin, &q)
 			vs[i].transition[j] = vs[q]
 		}
 	}
 	for i := 0; i < N; i++ {
 		for j := 0; j < M; j++ {
 			var s string
-			fmt.Scanf("%s", &s)
+			fmt.Fscan(bufstdin, &s)
 			vs[i].output[j] = s
 		}
 	}
+
 	new_Q := AufenkampHohn(vs)
 	COUNT = 0
-	q := FindRoot(q_0, new_Q)
+	q := FindRoot(vs[q_0].output, new_Q)
 	SetCanonicalNumering(q)
 	sort.Sort(new_Q)
 	PrintAutomata(new_Q)
