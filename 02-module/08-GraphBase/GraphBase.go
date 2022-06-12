@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"container/list"
 	"fmt"
+	"os"
 )
 
 var (
@@ -167,26 +169,21 @@ func SetRelations(cs *Comps) {
 }
 
 func main() {
-
+	bufstdin := bufio.NewReader(os.Stdin)
 	var N, M int
-	fmt.Scanf("%d\n", &N)
-	fmt.Scanf("%d\n", &M)
-
+	fmt.Fscan(bufstdin, &N, &M)
 	vs := make(Vertices, N)
 	for i := 0; i < N; i++ {
 		vs[i] = InitVertex(i)
 	}
-
-	var v, u int
 	for i := 0; i < M; i++ {
-		fmt.Scanf("%d %d\n", &v, &u)
+		var v, u int
+		fmt.Fscan(bufstdin, &v, &u)
 		vs[v].l.PushBack(vs[u])
 	}
-
 	cs := make(Comps, 0)
 	Tarjan(&vs, &cs)
 	SetRelations(&cs)
-
 	for _, c := range cs {
 		if c.parents.Front() == nil {
 			fmt.Printf("%d\n", c.vs.Front().Value.(*Vertex).num)
