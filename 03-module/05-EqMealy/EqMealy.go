@@ -212,16 +212,23 @@ func In(new_q *Vertex, new_Q Vertices) bool {
 	return false
 }
 
-func CanonizeAutomata(new_Q *Vertices, q0 int) {
+func CanonizeAutomata(new_Q *Vertices, q0_output []string) {
 	COUNT = 0
-	q := FindRoot(q0, *new_Q)
+	q := FindRoot(q0_output, *new_Q)
 	SetCanonicalNumering(q)
 	sort.Sort(new_Q)
 }
 
-func FindRoot(q_0 int, new_Q Vertices) *Vertex {
+func FindRoot(q0_output []string, new_Q Vertices) *Vertex {
 	for _, q := range new_Q {
-		if q.i == q_0 {
+		eq := true
+		for i, s := range q.output {
+			if s != q0_output[i] {
+				eq = false
+				break
+			}
+		}
+		if eq {
 			return q
 		}
 	}
@@ -277,9 +284,9 @@ func main() {
 		NotEqual()
 	}
 	new_Q1 := AufenkampHohn(Q1, N1, M1)
-	CanonizeAutomata(&new_Q1, q0_1)
+	CanonizeAutomata(&new_Q1, Q1[q0_1].output)
 	new_Q2 := AufenkampHohn(Q2, N2, M2)
-	CanonizeAutomata(&new_Q2, q0_2)
+	CanonizeAutomata(&new_Q2, Q2[q0_2].output)
 	if EqualAutomatas(new_Q1, new_Q2, M1) {
 		Equal()
 	} else {
